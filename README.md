@@ -7,6 +7,8 @@ Written as part of a bigger project to learn more about the Tibia 7.1 client, mo
 - Requires a Tibia 7.1 .pic, .spr and .dat file in the same folder as the map editor
 - Requires a categories.cats file in the same folder as the map editor (example following)
 
+Uses MonoGame for rendering.
+
 ## Example categories.cats file
 ```
 [All]
