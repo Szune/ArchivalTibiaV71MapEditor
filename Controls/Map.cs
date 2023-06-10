@@ -193,6 +193,11 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
         private void PerformLeftMouseButtonAction(bool spam)
         {
+            if (!UiState.IsActive)
+            {
+                return;
+            }
+
             if (_isWaitingForRelease && _waitingForButtonRelease == MouseButton.Left)
             {
                 return;
