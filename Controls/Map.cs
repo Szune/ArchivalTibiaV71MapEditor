@@ -503,6 +503,8 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 {
                     tile.AddItem(Ui.SelectedTile);
                 }
+
+                _lastOnTop = true;
             }
 
             if (Ui.SelectedTile == null)
@@ -526,8 +528,6 @@ namespace ArchivalTibiaV71MapEditor.Controls
                     }
                 }
             }
-
-            _lastOnTop = true;
         }
 
         private static bool ValidatePosition(Position pos) => pos.X <= MaxX && pos.Y <= MaxY && pos.Z <= MaxZ;
@@ -635,6 +635,8 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 if (tile.OnTop.Count < 1)
                     return;
                 _tiles[position].OnTop.RemoveAt(_tiles[position].OnTop.Count - 1);
+
+                _lastOnTop = true;
             }
 
             var pos = ScreenToWorld(GetMouseMapLocation());
@@ -653,8 +655,6 @@ namespace ArchivalTibiaV71MapEditor.Controls
                     }
                 }
             }
-
-            _lastOnTop = true;
         }
 
         private void SelectOnTop()
@@ -789,6 +789,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             var maxY = _tiles.Values.Max(t => t.Position.Y);
             var width = maxX - minX;
             var height = maxY - minY;
+            // TODO: cross-platform bitmap code
             using (var sprite = new Bitmap(width, height))
             {
                 var sprData = sprite.LockBits(new System.Drawing.Rectangle(0, 0, width, height),
@@ -892,6 +893,83 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
         public void PreRender(SpriteBatch sb, DrawComponents drawComponents)
         {
+            // two phase pre render
+            if (!IsDirty) return;
+            Recalculate();
+            // draw to rendertarget2d and cache until dirty again
+            _cachedMap?.Dispose();
+            _cachedMap = new RenderTarget2D(sb.GraphicsDevice, CleanRect.Width, CleanRect.Height, false,
+                SurfaceFormat.Color, DepthFormat.None, 0, RenderTargetUsage.PreserveContents);
+            sb.GraphicsDevice.SetRenderTarget(_cachedMap);
+            sb.UsualBegin();
+            sb.Draw(Pixel.Black, new Rectangle(0, 0, CleanRect.Width, CleanRect.Height), Color.White);
+
+            byte startZ, endZ;
+            if (_currentZ >= 7)
+            {
+                startZ = 7;
+                endZ = (byte) (_currentZ + 1);
+            }
+            else
+            {
+                startZ = 0;
+                endZ = 7;
+            }
+
+            for (short z = startZ; z != endZ; z++)
+            {
+                // draw tiles on current floor
+                for (ushort y = _yOffset; y < _yOffset + _yTiles; y++)
+                {
+                    for (ushort x = _xOffset; x < _xOffset + _xTiles; x++)
+                    {
+                        if (!_tiles.TryGetValue(new Position(x, y, (byte) z), out var tile)) continue;
+                        var location = WorldToRenderTarget(tile.Position);
+                        //if (!CleanRect.Contains(location + (Vector2.One * (_renderSize.X - 1)))) continue;
+                        var tileParts = tile.Ground.GetParts(location, _renderSize);
+                        drawComponents.SpriteRenderer.Draw(
+                            sb,
+                            tileParts,
+                            z == _currentZ
+                                ? Color.White
+                                : Color.DarkSlateGray
+                        );
+                    }
+                }
+
+                // draw items on top of tiles on current floor
+                for (ushort y = _yOffset; y < _yOffset + _yTiles; y++)
+                {
+                    for (ushort x = _xOffset; x < _xOffset + _xTiles; x++)
+                    {
+                        if (!_tiles.TryGetValue(new Position(x, y, (byte) z), out var tile)) continue;
+                        var location = WorldToRenderTarget(tile.Position);
+                        //if (!CleanRect.Contains(location + (Vector2.One * (_renderSize.X - 1)))) continue;
+                        for (int a = 0; a < tile.OnTop.Count; a++)
+                        {
+                            // var pixels = tile.OnTop[a].Item.BlendFrames;
+                            // var offset = pixels - _renderSize.X;
+                            // var onTopParts = tile.OnTop[a]
+                            //     .GetParts(location - (Vector2.One * offset), new Point(pixels, pixels));
+                            var onTopParts = tile.OnTop[a].GetParts(location, _renderSize);
+                            drawComponents.SpriteRenderer.Draw(
+                                sb,
+                                onTopParts,
+                                z == _currentZ
+                                    ? Color.White
+                                    : Color.DarkSlateGray
+                            );
+                        }
+                    }
+                }
+            }
+
+            sb.End();
+            IsDirty = false;
+        }
+
+        public void SinglePhasePreRender(SpriteBatch sb, DrawComponents drawComponents)
+        {
             if (!IsDirty) return;
             Recalculate();
             // draw to rendertarget2d and cache until dirty again
@@ -924,8 +1002,13 @@ namespace ArchivalTibiaV71MapEditor.Controls
                         var location = WorldToRenderTarget(tile.Position);
                         //if (!CleanRect.Contains(location + (Vector2.One * (_renderSize.X - 1)))) continue;
                         var tileParts = tile.Ground.GetParts(location, _renderSize);
-                        drawComponents.SpriteRenderer.Draw(sb, tileParts,
-                            z == _currentZ ? Color.White : Color.DarkSlateGray);
+                        drawComponents.SpriteRenderer.Draw(
+                            sb,
+                            tileParts,
+                            z == _currentZ
+                                ? Color.White
+                                : Color.DarkSlateGray
+                        );
                         for (int a = 0; a < tile.OnTop.Count; a++)
                         {
                             // var pixels = tile.OnTop[a].Item.BlendFrames;
@@ -933,8 +1016,13 @@ namespace ArchivalTibiaV71MapEditor.Controls
                             // var onTopParts = tile.OnTop[a]
                             //     .GetParts(location - (Vector2.One * offset), new Point(pixels, pixels));
                             var onTopParts = tile.OnTop[a].GetParts(location, _renderSize);
-                            drawComponents.SpriteRenderer.Draw(sb, onTopParts,
-                                z == _currentZ ? Color.White : Color.DarkSlateGray);
+                            drawComponents.SpriteRenderer.Draw(
+                                sb,
+                                onTopParts,
+                                z == _currentZ
+                                    ? Color.White
+                                    : Color.DarkSlateGray
+                            );
                         }
                     }
                 }
