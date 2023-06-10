@@ -8,3 +8,4 @@
 * Selecting a tile now requires releasing the mouse button before placing the selected tile
 * Removing a ground tile is now possible when using the regular remove tool
 * A missing `categories.cats` file generates the most basic one instead of crashing
+* No longer performs actions unless the map editor window is active
