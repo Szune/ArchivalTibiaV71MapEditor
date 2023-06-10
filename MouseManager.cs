@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 
@@ -15,40 +15,44 @@ namespace ArchivalTibiaV71MapEditor
     {
         // true == button down
         // false == button up
-        private static readonly Dictionary<MouseButton, bool> LastState = new Dictionary<MouseButton, bool>
-        {
-            {MouseButton.Left, false},
-            {MouseButton.Right, false},
-            {MouseButton.Middle, false},
-        };
+        private static bool _leftButton;
+        private static bool _rightButton;
+        private static bool _middleButton;
 
-        public static bool AreAllUp()
-        {
-            return UiState.Mouse.LeftButton != ButtonState.Pressed
-            && UiState.Mouse.RightButton != ButtonState.Pressed
-            && UiState.Mouse.MiddleButton != ButtonState.Pressed;
-        }
+        public static bool AreAllUp() =>
+            UiState.Mouse.LeftButton != ButtonState.Pressed &&
+            UiState.Mouse.RightButton != ButtonState.Pressed &&
+            UiState.Mouse.MiddleButton != ButtonState.Pressed;
 
         public static void Update()
         {
-            LastState[MouseButton.Left] = UiState.Mouse.LeftButton == ButtonState.Pressed;
-            LastState[MouseButton.Right] = UiState.Mouse.RightButton == ButtonState.Pressed;
-            LastState[MouseButton.Middle] = UiState.Mouse.MiddleButton == ButtonState.Pressed;
-        }
-        public static bool IsDown(MouseButton mouse)
-        {
-            return LastState[mouse];
-        }
-        
-        public static bool IsUp(MouseButton mouse)
-        {
-            return !LastState[mouse];
+            _leftButton = UiState.Mouse.LeftButton == ButtonState.Pressed;
+            _rightButton = UiState.Mouse.RightButton == ButtonState.Pressed;
+            _middleButton = UiState.Mouse.MiddleButton == ButtonState.Pressed;
         }
 
-        public static bool IsHovering(Rectangle bounds)
-        {
-            return IsUp(MouseButton.Left) && IsUp(MouseButton.Middle) && IsUp(MouseButton.Right) &&
-                   bounds.Contains(UiState.Mouse.Position);
-        }
+        public static bool IsDown(MouseButton mouse) =>
+            mouse switch
+            {
+                MouseButton.Left => _leftButton,
+                MouseButton.Right => _rightButton,
+                MouseButton.Middle => _middleButton,
+                _ => throw new ArgumentOutOfRangeException(nameof(mouse), mouse, null)
+            };
+
+        public static bool IsUp(MouseButton mouse) =>
+            !(mouse switch
+            {
+                MouseButton.Left => _leftButton,
+                MouseButton.Right => _rightButton,
+                MouseButton.Middle => _middleButton,
+                _ => throw new ArgumentOutOfRangeException(nameof(mouse), mouse, null)
+            });
+
+        public static bool IsHovering(Rectangle bounds) =>
+            !_leftButton &&
+            !_rightButton &&
+            !_middleButton &&
+            bounds.Contains(UiState.Mouse.Position);
     }
 }
