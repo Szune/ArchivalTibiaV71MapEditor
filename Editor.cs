@@ -4,7 +4,6 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ArchivalTibiaV71MapEditor.Constants;
 using ArchivalTibiaV71MapEditor.Controls;
-using ArchivalTibiaV71MapEditor.Controls.Addons;
 using ArchivalTibiaV71MapEditor.Extensions;
 using ArchivalTibiaV71MapEditor.Fonts;
 using ArchivalTibiaV71MapEditor.Readers;
@@ -56,12 +55,11 @@ namespace ArchivalTibiaV71MapEditor
             var picReader = new PicReader(File.OpenRead("Tibia.pic"));
             var picSpriteSheets = picReader.ReadSpriteSheets(GraphicsDevice);
             Ui.SpriteSheet = picSpriteSheets[(int)SpriteSheets.Ui];
-            
+
             Pixel.Setup(GraphicsDevice);
             Categories.Load();
             GameCollections.Load(GraphicsDevice);
-            
-            
+
             _window = new Window(_gameWidth, _gameHeight);
             IoC.Register<IFont, FontWithStroke>(new FontWithStroke(picSpriteSheets[(int)SpriteSheets.FontMonospacedWithStroke]));
             IoC.Register<IWindow, Window>(_window);
@@ -79,7 +77,7 @@ namespace ArchivalTibiaV71MapEditor
 
         protected override void Update(GameTime gameTime)
         {
-            UiState.Update();
+            UiState.Update(IsActive);
             Shortcuts.Update();
 
             if (!GraphicsDevice.Viewport.Bounds.Contains(UiState.Mouse.Position))
@@ -119,7 +117,7 @@ namespace ArchivalTibiaV71MapEditor
 
             for (var i = 0; i < Modals.Count; i++)
                 Modals.Draw(i, _spriteBatch, _drawComponents);
-            
+
             _spriteBatch.UsualEnd();
         }
     }
