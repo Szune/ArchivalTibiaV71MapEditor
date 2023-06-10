@@ -23,9 +23,11 @@ namespace ArchivalTibiaV71MapEditor.Controls
         {
             None,
             Hovering,
-            AddingTiles,
+            AddingTiles
         }
 
+        private bool _isWaitingForRelease;
+        private MouseButton? _waitingForButtonRelease;
         private readonly Rectangle _offset;
         private ActionState _state;
         private int _xTiles;
@@ -92,13 +94,21 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 _state = ActionState.AddingTiles;
                 if (_lastOnTop)
                     return;
-                PerformAction(true);
+                PerformLeftMouseButtonAction(true);
             };
             _clickable.OnLeftClick = () =>
             {
                 _lastOnTop = false;
                 _state = ActionState.AddingTiles;
-                PerformAction(false);
+                PerformLeftMouseButtonAction(false);
+            };
+            _clickable.OnLeftUp = () =>
+            {
+                if (_isWaitingForRelease && _waitingForButtonRelease == MouseButton.Left)
+                {
+                    _isWaitingForRelease = false;
+                    _waitingForButtonRelease = null;
+                }
             };
             _clickable.OnRightClick = () =>
             {
@@ -181,8 +191,13 @@ namespace ArchivalTibiaV71MapEditor.Controls
             IsDirty = true;
         }
 
-        private void PerformAction(bool spam)
+        private void PerformLeftMouseButtonAction(bool spam)
         {
+            if (_isWaitingForRelease && _waitingForButtonRelease == MouseButton.Left)
+            {
+                return;
+            }
+
             switch (_tool)
             {
                 case MapTool.Place:
@@ -207,7 +222,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
                     QuickRemove();
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    throw new InvalidOperationException($"Unknown tool {_tool}");
             }
 
             IsDirty = true;
@@ -668,7 +683,11 @@ namespace ArchivalTibiaV71MapEditor.Controls
             }
 
             if (_placeButton != null)
+            {
+                _isWaitingForRelease = true;
+                _waitingForButtonRelease = MouseButton.Left;
                 SetTool(_placeTool, _placeButton);
+            }
         }
 
         public override void Recalculate()
