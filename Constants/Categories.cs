@@ -25,14 +25,14 @@ namespace ArchivalTibiaV71MapEditor.Constants
             ViewAsImageList = false;
             ActiveCategoryViewBox?.Dirty();
         }
-        
+
         public static void Select(string item)
         {
             if (!Translations.TryGetValue(item, out var lstBox))
                 return;
             SetCurrentTileListBox(lstBox);
         }
-        
+
         private static void SetCurrentTileListBox(MultiViewBox<int> lst)
         {
             if (ActiveCategoryViewBox != null)
@@ -46,7 +46,14 @@ namespace ArchivalTibiaV71MapEditor.Constants
 
         public static void Load()
         {
-            var categoryReader = new CategoryReader(File.OpenRead("categories.cats"));
+            const string fileName = "categories.cats";
+            if (!File.Exists(fileName))
+            {
+                const string fileContents = "[All]\nRange(0,9999)\n";
+                File.WriteAllText(fileName , fileContents);
+            }
+
+            var categoryReader = new CategoryReader(File.OpenRead(fileName));
             var categories = categoryReader.ReadToEnd();
             Items = categories;
         }
