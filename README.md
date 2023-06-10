@@ -3,7 +3,6 @@ Written as part of a bigger project to learn more about the Tibia 7.1 client, mo
 
 ⚠ **Disclaimer:**
 
-- Has issues drawing some of the sprites
 - Requires a Tibia 7.1 .pic, .spr and .dat file in the same folder as the map editor
 - Requires a categories.cats file in the same folder as the map editor (example following)
 
