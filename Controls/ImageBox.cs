@@ -10,7 +10,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
         public readonly Sprite Sprite;
         private SpritePart[] _spriteParts;
 
-        public ImageBox(Sprite sprite, Point renderSize) 
+        public ImageBox(Sprite sprite, Point renderSize)
             : this(null, null, sprite, renderSize, Rectangle.Empty)
         {
         }
@@ -52,7 +52,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
         public override void Recalculate()
         {
             base.Recalculate();
-            _spriteParts = Sprite.GetParts(CleanRect.Location.ToVector2(), _renderSize);
+            _spriteParts = Sprite.GetSingleTileParts(CleanRect.Location.ToVector2(), _renderSize);
         }
     }
 }
