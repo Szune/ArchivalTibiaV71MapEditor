@@ -63,7 +63,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             return MouseManager.IsHovering(_backgroundRect);
         }
         
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;

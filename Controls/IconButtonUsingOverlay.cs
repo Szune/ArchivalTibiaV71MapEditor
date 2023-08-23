@@ -26,7 +26,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             SetRect(rect);
         }
         
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             sb.Draw(_spriteSheet, CleanRect, _spritePosition, Color);
             var overlay = _state switch

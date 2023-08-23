@@ -6,7 +6,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
 {
     public abstract class ControlBase : IControl
     {
-        
+
         protected ControlBase(IWindow window, IControl parent, bool visible = true)
         {
             Window = window;
@@ -154,7 +154,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             IsDirty = true;
         }
 
-        public abstract void Draw(SpriteBatch sb, DrawComponents drawComponents);
+        public abstract void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents);
 
         /// <summary>
         /// If overriding this function, assign CleanRect to Bounds at the end.

@@ -28,15 +28,15 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 return Bounds.Contains(UiState.Mouse.Position);
             }
 
-            public void Draw(SpriteBatch sb, DrawComponents drawComponents, bool selected)
+            public void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents, bool selected)
             {
                 if (selected)
                     sb.Draw(Pixel.White, Bounds, Color.LightGray);
                 else if (MouseManager.IsHovering(Bounds))
                     sb.Draw(Pixel.White, Bounds, Color.LightBlue);
                 Label.Color = selected ? Color.Red : Color.White;
-                ImageBox.Draw(sb, drawComponents);
-                Label.Draw(sb, drawComponents);
+                ImageBox.Draw(sb, gameTime, drawComponents);
+                Label.Draw(sb, gameTime, drawComponents);
             }
         }
 
@@ -108,7 +108,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             IsDirty = true;
         }
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;
@@ -127,11 +127,11 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 i < _items.Count && i - VerticalScrollIndex < VerticalMaxVisibleItems;
                 i++)
             {
-                _items[i].Draw(sb, drawComponents, _selectedItem?.Value.Equals(_items[i].Value) ?? false);
+                _items[i].Draw(sb, gameTime, drawComponents, _selectedItem?.Value.Equals(_items[i].Value) ?? false);
             }
 
             if (VerticalItemCount > VerticalMaxVisibleItems)
-                _scrollBar.Draw(sb, drawComponents);
+                _scrollBar.Draw(sb, gameTime, drawComponents);
         }
 
         public override HitBox HitTest()

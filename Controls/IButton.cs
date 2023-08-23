@@ -1,16 +1,15 @@
 using System;
 using Microsoft.Xna.Framework;
 
-namespace ArchivalTibiaV71MapEditor.Controls
+namespace ArchivalTibiaV71MapEditor.Controls;
+
+public enum ButtonStates
 {
-    public enum ButtonStates
-    {
-        Normal,
-        Pressed
-    }
-    public interface IButton : IControl
-    {
-        Color Color { get; set; }
-        Action OnClick { get; set; }
-    }
+    Normal,
+    Pressed
+}
+public interface IButton : IControl
+{
+    Color Color { get; set; }
+    Action OnClick { get; set; }
 }

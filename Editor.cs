@@ -78,7 +78,6 @@ namespace ArchivalTibiaV71MapEditor
         protected override void Update(GameTime gameTime)
         {
             UiState.Update(IsActive);
-            Shortcuts.Update();
 
             if (!GraphicsDevice.Viewport.Bounds.Contains(UiState.Mouse.Position))
             {
@@ -88,12 +87,25 @@ namespace ArchivalTibiaV71MapEditor
             if (Modals.Count > 0)
             {
                 Modals.Update();
+                var focused = IoC.Get<IFocusedTextBox>().Focused;
+                focused?.UpdateText(gameTime);
                 _waitForMouseUp = true;
                 return;
             }
 
             if (!_waitForMouseUp)
+            {
                 _window.Update();
+                var focused = IoC.Get<IFocusedTextBox>().Focused;
+                if (focused != null)
+                {
+                    focused.UpdateText(gameTime);
+                }
+                else
+                {
+                    Shortcuts.Update();
+                }
+            }
             else
                 _waitForMouseUp = !MouseManager.AreAllUp();
         }
@@ -113,10 +125,10 @@ namespace ArchivalTibiaV71MapEditor
             _spriteBatch.UsualBegin();
 
             _uiRenderer.DrawBackground(_spriteBatch);
-            _window.Draw(_spriteBatch, _drawComponents);
+            _window.Draw(_spriteBatch, gameTime, _drawComponents);
 
             for (var i = 0; i < Modals.Count; i++)
-                Modals.Draw(i, _spriteBatch, _drawComponents);
+                Modals.Draw(i, _spriteBatch, gameTime, _drawComponents);
 
             _spriteBatch.UsualEnd();
         }

@@ -43,7 +43,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
         : this(window, parent, Color.White, rect, text, zIndex, visible)
         {
         }
-        
+
         public Label(IWindow window, IControl parent, Color color, Rectangle rect, string text = "", int zIndex = 0, bool visible = true)
         : base(window, parent, visible)
         {
@@ -55,7 +55,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
         }
 
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;

@@ -59,7 +59,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             _spritePressed = spritePressed;
             IsDirty = true;
         }
-        
+
         public SmallButton(IWindow window, IControl parent,  Rectangle rect, string text)
             : base(window, parent)
         {
@@ -69,8 +69,8 @@ namespace ArchivalTibiaV71MapEditor.Controls
             Text = text;
             IsDirty = true;
         }
-        
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;

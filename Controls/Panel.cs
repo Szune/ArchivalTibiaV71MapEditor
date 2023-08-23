@@ -36,7 +36,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             BorderSize = 4;
         }
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;
@@ -45,7 +45,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             //sb.Draw(_cachedPanel, CleanRect, Color.White);
             for (int i = 0; i < _controls.Count; i++)
             {
-                _controls[i].Draw(sb, drawComponents);
+                _controls[i].Draw(sb, gameTime, drawComponents);
             }
             
             sb.Draw(_spriteSheet, _middleTop, Ui.Border.WindowMiddleTop, Color.White);

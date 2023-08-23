@@ -23,9 +23,10 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
         private float _dragMultiplier;
         private int _verticalOffset;
         private readonly MouseScrollable _mouseScrollable;
+        private readonly bool _scrollable;
 
         public HorizontalScrollBar(IWindow window, ICanHaveHorizontalScrollBar parent,
-            Border border)
+            Border border, bool scrollable = true)
             : base(window, parent)
         {
             // scrollbars must be attached to a control
@@ -33,6 +34,7 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
             Parent = parent ?? throw new ArgumentNullException(nameof(parent));
             _spriteSheet = Ui.SpriteSheet;
             _border = border;
+            _scrollable = scrollable;
             ZIndex = parent.ZIndex;
             Visible = true;
             _leftArrow = new IconButtonUsingOverlay(window, this, Ui.ScrollBar.LeftArrow,
@@ -42,8 +44,11 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
                 Ui.ScrollBar.ArrowNormalOverlay, Ui.ScrollBar.ArrowPressedOverlay, Rectangle.Empty);
             _rightArrow.SetOnClick(ScrollDown);
             _draggable = new Draggable(MouseButton.Left, 5);
-            _mouseScrollable = new MouseScrollable(parent, ModifierKeys.Shift);
-            _mouseScrollable.OnScroll = ScrollMouse;
+            if (scrollable)
+            {
+                _mouseScrollable = new MouseScrollable(parent, ModifierKeys.Shift);
+                _mouseScrollable.OnScroll = ScrollMouse;
+            }
         }
 
         private void ScrollMouse(int delta)
@@ -64,7 +69,7 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
             parent.HorizontalScroll(-1);
         }
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;
@@ -88,8 +93,8 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
             sb.Draw(_spriteSheet, _barRightRect, Ui.ScrollBar.HorizontalForegroundEnd, Color.White);
 
             // arrows
-            _leftArrow.Draw(sb, drawComponents);
-            _rightArrow.Draw(sb, drawComponents);
+            _leftArrow.Draw(sb, gameTime, drawComponents);
+            _rightArrow.Draw(sb, gameTime, drawComponents);
         }
 
         public void Offset(int vertical)
@@ -126,7 +131,7 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
             {
                 return hit;
             }
-            else if ((hit = _mouseScrollable.HitTest()).IsHit)
+            else if (_scrollable && (hit = _mouseScrollable.HitTest()).IsHit)
             {
                 return hit;
             }

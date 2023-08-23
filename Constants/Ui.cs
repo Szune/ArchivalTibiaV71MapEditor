@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using ArchivalTibiaV71MapEditor.Controls;
@@ -8,7 +7,8 @@ namespace ArchivalTibiaV71MapEditor.Constants
 {
     public static class Ui
     {
-        public static Label StatusTextLabel;
+        public static Label TopLeftPositionTextLabel;
+        public static Label MousePositionTextLabel;
         public static Sprite SelectedTile;
         public static Texture2D SpriteSheet;
         public const int CaptionHeight = 20;

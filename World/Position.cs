@@ -26,5 +26,8 @@ namespace ArchivalTibiaV71MapEditor.World
         {
             return (X, Y, Z).GetHashCode();
         }
+
+        public Position Add(ushort xyOffset) => new Position((ushort)(X + xyOffset), (ushort)(Y + xyOffset), Z);
+        public Position Subtract(ushort xyOffset) => new Position((ushort)(X - xyOffset), (ushort)(Y - xyOffset), Z);
     }
 }

@@ -44,7 +44,7 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
             {
                 if (item.OnClick != null)
                 {
-                    Shortcuts.SetToolSelect();
+                    //Shortcuts.SetToolSelect();
                     Close();
                 }
                 _listBox.Unselect();
@@ -54,7 +54,7 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
 
         private void Close()
         {
-            Modals.RemoveLast();
+            Modals.RemoveThis(Id);
         }
 
         public static void Setup()
@@ -69,13 +69,13 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
             Modals.Add(this);
         }
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;
             if (IsDirty)
                 Recalculate();
-            _listBox.Draw(sb, drawComponents);
+            _listBox.Draw(sb, gameTime, drawComponents);
         }
 
         public override void Recalculate()
@@ -99,7 +99,7 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
             // hit test first, then check mouse is down outside of context menu
             if (MouseManager.IsDown(MouseButton.Left) && !CleanRect.Contains(UiState.Mouse.Position))
             {
-                Shortcuts.SetToolSelect();
+                //Shortcuts.SetToolSelect();
                 Close();
             }
         }

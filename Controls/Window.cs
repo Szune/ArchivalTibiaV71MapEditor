@@ -75,13 +75,13 @@ namespace ArchivalTibiaV71MapEditor.Controls
             _controls.Add(control);
         }
 
-        public void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (_isDirty)
                 Recalculate();
             for (int i = 0; i < _controls.Count; i++)
             {
-                _controls[i].Draw(sb, drawComponents);
+                _controls[i].Draw(sb, gameTime, drawComponents);
             }
 
             sb.Draw(_spriteSheet, _middleTop, Ui.Border.WindowMiddleTop, Color.White);
@@ -145,9 +145,9 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 if (MouseManager.IsDown(MouseButton.Left))
                 {
                     var test = LastHitTest.HitTest();
-                    if(test.IsHit)
+                    if (test.IsHit) {
                         return;
-                    LastHitTest = null;
+                    }
                 }
                 LastHitTest = null;
             }

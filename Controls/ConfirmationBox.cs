@@ -39,7 +39,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
         private readonly SmallButton _buttonYes;
 
         public Guid Id { get; } = Guid.NewGuid();
-        
+
         private ConfirmationBox(Rectangle rect, string caption, string text, Action onYes, bool visible = true)
             : base(null, null, visible)
         {
@@ -66,7 +66,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
         private void Close()
         {
-            Modals.RemoveLast();
+            Modals.RemoveThis(Id);
         }
 
         public static void Setup()
@@ -75,7 +75,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             _font = IoC.Get<IFont>();
             _spriteSheet = Ui.SpriteSheet;
         }
-        
+
         public static void Show(Point location, string text, Action onYes, string caption = "Are you sure?")
         {
             var strSize = _font.MeasureString(text);
@@ -88,7 +88,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
                         Ui.CaptionHeight + ButtonHeight + Margin * 2)), caption, text, onYes));
         }
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;
@@ -112,8 +112,8 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
             drawComponents.FontRenderer.DrawCachedString(sb, _caption, _captionPos);
             drawComponents.FontRenderer.DrawCachedString(sb, _text, _textPos);
-            _buttonYes.Draw(sb, drawComponents);
-            _buttonNo.Draw(sb, drawComponents);
+            _buttonYes.Draw(sb, gameTime, drawComponents);
+            _buttonNo.Draw(sb, gameTime, drawComponents);
 
             sb.Draw(_spriteSheet, _topLeft, Ui.Border.WindowTopLeft, Color.White);
             sb.Draw(_spriteSheet, _topRight, Ui.Border.WindowTopRight, Color.White);

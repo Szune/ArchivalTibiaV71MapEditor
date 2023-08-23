@@ -8,7 +8,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
         int Width { get; }
         int Height { get; }
         void AddControl(IControl control);
-        void Draw(SpriteBatch sb, DrawComponents drawComponents);
+        void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents);
         void SetSize(int width, int height);
         void Dirty();
         void Update();

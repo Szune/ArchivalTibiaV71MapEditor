@@ -41,7 +41,7 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
             _items.Add(new RootMenuItem(this, text, menu, new Point(NextX, CleanRect.Top), Margin));
         }
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!IsVisible())
                 return;
@@ -49,7 +49,7 @@ namespace ArchivalTibiaV71MapEditor.Controls.Addons
                 Recalculate();
             for (var i = 0; i < _items.Count; i++)
             {
-                _items[i].Button.Draw(sb, drawComponents);
+                _items[i].Button.Draw(sb, gameTime, drawComponents);
             }
         }
 

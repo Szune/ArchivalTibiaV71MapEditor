@@ -14,12 +14,11 @@ namespace ArchivalTibiaV71MapEditor.Controls
         void SetRect(Rectangle rect);
         void OffsetChild(ref Rectangle rect);
         void Dirty();
-        void Draw(SpriteBatch sb, DrawComponents drawComponents);
+        void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents);
         int BorderSize { get; }
         int X { get; set; }
         int Y { get; set; }
         int Width { get; set; }
         int Height { get; set; }
-        HitBox HitTest();
     }
 }

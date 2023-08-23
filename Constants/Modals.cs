@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Microsoft.Xna.Framework.Graphics;
 using ArchivalTibiaV71MapEditor.Controls;
+using Microsoft.Xna.Framework;
 
 namespace ArchivalTibiaV71MapEditor.Constants
 {
@@ -27,9 +28,14 @@ namespace ArchivalTibiaV71MapEditor.Constants
             Items.Last().Update();
         }
 
-        public static void Draw(int i, SpriteBatch sb, DrawComponents drawComponents)
+        public static void Draw(int i, SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
-            Items[i].Draw(sb, drawComponents);
+            Items[i].Draw(sb, gameTime, drawComponents);
+        }
+
+        public static void RemoveThis(Guid id)
+        {
+            Items.RemoveAll(x => x.Id.Equals(id));
         }
     }
 }

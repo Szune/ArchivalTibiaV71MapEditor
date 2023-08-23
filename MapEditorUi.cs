@@ -1,10 +1,8 @@
-using System.IO;
 using System.Linq;
 using Microsoft.Xna.Framework;
 using ArchivalTibiaV71MapEditor.Constants;
 using ArchivalTibiaV71MapEditor.Controls;
 using ArchivalTibiaV71MapEditor.Controls.Addons;
-using ArchivalTibiaV71MapEditor.World;
 
 namespace ArchivalTibiaV71MapEditor
 {
@@ -12,6 +10,7 @@ namespace ArchivalTibiaV71MapEditor
     {
         public static void Setup()
         {
+            IoC.Register<IFocusedTextBox, FocusedTextBox>(new FocusedTextBox());
             MessageBox.Setup();
             ConfirmationBox.Setup();
             ContextMenu.Setup();
@@ -22,14 +21,22 @@ namespace ArchivalTibiaV71MapEditor
             window.AddControl(menu);
 
             var leftPanel = new Panel(window, null, new Rectangle(0, 20, 300, window.Width));
-            var statusLabel = new Label(window, leftPanel, Color.LimeGreen, new Rectangle(15, 10, 100, 16),
-                "Position:");
-            leftPanel.AddControl(statusLabel);
+            var topLeftPositionLabel = new Label(window, leftPanel, Color.LimeGreen, new Rectangle(15, 10, 100, 16),
+                "Top Left Pos:");
+            leftPanel.AddControl(topLeftPositionLabel);
 
-            var statusTextLabel = new Label(window, leftPanel, Color.White, new Rectangle(15, 26, 100, 16));
-            leftPanel.AddControl(statusTextLabel);
-            Ui.StatusTextLabel = statusTextLabel;
-            
+            var topLeftPositionTextLabel = new Label(window, leftPanel, Color.White, new Rectangle(15, 26, 100, 16));
+            leftPanel.AddControl(topLeftPositionTextLabel);
+            Ui.TopLeftPositionTextLabel = topLeftPositionTextLabel;
+
+            var mousePositionLabel = new Label(window, leftPanel, Color.LimeGreen, new Rectangle(150, 10, 100, 16),
+                "Mouse Pos:");
+            leftPanel.AddControl(mousePositionLabel);
+
+            var mousePositionTextLabel = new Label(window, leftPanel, Color.White, new Rectangle(150, 26, 100, 16));
+            leftPanel.AddControl(mousePositionTextLabel);
+            Ui.MousePositionTextLabel = mousePositionTextLabel;
+
             // var paletteBox = new PaletteBox<int>(window, leftPanel, new Rectangle(150, 50, 120, 100), 5);
             // for (int i = 0; i < 20; i++)
             // {
@@ -126,9 +133,10 @@ namespace ArchivalTibiaV71MapEditor
             void NextRow()
             {
                 leftToolYOffset += toolHeight + toolMargin;
-                leftToolXOffset = leftToolsX;
+                leftToolXOffset = leftToolsX + 40 + toolMargin;
             }
 
+            IButton moveButton;
             IButton placeButton;
             IButton removeButton;
             IButton oneXButton;
@@ -137,9 +145,11 @@ namespace ArchivalTibiaV71MapEditor
 
             void AddFirstRow()
             {
+                moveButton = ToolButton(40, 53, "Move");
                 placeButton = ToolButton(60, 24, "Place");
                 removeButton = ToolButton(80, 24, "Remove");
                 selectButton = ToolButton(toolRightMargin - 5, 53, "Select");
+                AddTool(moveButton);
                 AddTool(placeButton);
                 AddTool(removeButton);
                 AddTool(selectButton);
@@ -179,6 +189,7 @@ namespace ArchivalTibiaV71MapEditor
                 Window.BorderSize + Scroll.Height));
             window.AddControl(map);
             map.SetPlaceTool(MapTool.Place, placeButton);
+            moveButton.OnClick = Shortcuts.SetToolMove = () => { map.SetTool(MapTool.Move, moveButton); };
             placeButton.OnClick = Shortcuts.SetToolPlace = () => { map.SetTool(MapTool.Place, placeButton); };
             fastPlaceButton.OnClick = Shortcuts.SetToolQuickPlace = () =>
             {
@@ -196,7 +207,7 @@ namespace ArchivalTibiaV71MapEditor
             fiveXButton.OnClick = Shortcuts.SetPencil55 = () => { map.SetPencilSize(5, 5, fiveXButton); };
             nineXButton.OnClick = Shortcuts.SetPencil99 = () => { map.SetPencilSize(9, 9, nineXButton); };
 
-            map.SetTool(MapTool.Place, placeButton);
+            map.SetTool(MapTool.Move, moveButton);
             map.SetPencilSize(1, 1, oneXButton);
             IoC.Register<Map, Map>(map);
         }
@@ -220,31 +231,12 @@ namespace ArchivalTibiaV71MapEditor
                 new MenuItem("Load\tCtrl+O",
                     Shortcuts.Load = () =>
                     {
-                        ConfirmationBox.Show(window.Center() - new Point(180, 100),
-                            "Do you want to load a map?",
-                            () =>
-                            {
-                                var map = window.GetControl<Map>();
-                                using var fs = File.OpenRead("world.map");
-                                var reader = new MapReader(fs);
-                                map.Read(reader);
-                            });
+                        Dialogs.LoadMap.Show(window.Center() - new Point(0, (window.Center().Y / 4) * 3));
                     }),
                 new MenuItem("Save\tCtrl+S",
                     Shortcuts.Save = () =>
                     {
-                        ConfirmationBox.Show(window.Center() - new Point(180, 100),
-                            "Do you want to save the current map?",
-                            () =>
-                            {
-                                var map = window.GetControl<Map>();
-                                using var fs = File.OpenWrite("world.map");
-                                fs.SetLength(0);
-                                fs.Flush();
-                                var writer = new MapWriter(fs);
-                                map.Write(writer);
-                                //map.WriteText("map.txt");
-                            });
+                        Dialogs.SaveMap.Show(window.Center() - new Point(0, (window.Center().Y / 4) * 3));
                     }),
                 new MenuItem("----"),
                 new MenuItem("Exit", IoC.Get<Game>().Exit),
@@ -256,9 +248,14 @@ namespace ArchivalTibiaV71MapEditor
             {
                 new MenuItem("Palette mode", Categories.DisplayPalette),
                 new MenuItem("List mode", Categories.DisplayList),
+                new MenuItem("Ground floor",
+                    Shortcuts.SetGroundFloor = () =>
+                    {
+                        window.GetControl<Map>().SetFloor(7);
+                    })
             });
             menu.AddItem("View", viewMenu);
-            
+
             /* generate */
             var generateMenu = new ContextMenu(new[]
             {
@@ -274,9 +271,30 @@ namespace ArchivalTibiaV71MapEditor
             /* help */
             var helpMenu = new ContextMenu(new[]
             {
+                new MenuItem("Shortcuts", () =>
+                {
+                    MessageBox.Show(window.Center() - new Point(0, (window.Center().Y / 4) * 3),
+                        "Shortcuts:\n\n" +
+                        string.Join("\n\n",
+                        Shortcuts.Keybindings.Select(x => x.modifier == ModifierKeys.None
+                            ? $"{x.key.KeyToString()} - {x.HelpText}"
+                            : $"{x.modifier.ModifierToString()}+{x.key.KeyToString()} - {x.HelpText}"
+                            )
+                        ));
+                }),
                 new MenuItem("About", () => { MessageBox.Show(window.Center(), "Author: Erik Iwarson"); }),
             });
             menu.AddItem("Help", helpMenu);
+
+            /* test */
+            var testMenu = new ContextMenu(new[]
+            {
+                new MenuItem("Test dialog", () =>
+                {
+                    Dialogs.Test.Show(window.Center() - new Point(0, (window.Center().Y / 4) * 3));
+                })
+            });
+            menu.AddItem("Test", testMenu);
             return menu;
         }
     }

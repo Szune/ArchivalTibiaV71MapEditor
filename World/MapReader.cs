@@ -44,7 +44,7 @@ namespace ArchivalTibiaV71MapEditor.World
                     err = $"\nRemoved item at ({x},{y},{z}) from zindex {i+1} with item id {items[i].Item.ItemId} because it is a ground tile id.";
                 items.RemoveAt(i);
             }
-            if (item.Type != DatCategories.Tiles)
+            if (item.Type != DatCategories.Tiles && (z > 7 || item.MinimapColor <= 0))
                 return (null, false, $"Removed ground tile at ({x},{y},{z}) with item id {itemId} because it is not a ground tile id.");
             if (x > Controls.Map.MaxX || y > Controls.Map.MaxY || z > Controls.Map.MaxZ)
                 return (null, false, $"Removed tile with item id {itemId} because it was out of bounds ({x},{y},{z}).");

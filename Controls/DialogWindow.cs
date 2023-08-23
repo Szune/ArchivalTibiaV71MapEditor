@@ -56,7 +56,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
         public void Close()
         {
-            Modals.RemoveLast();
+            Modals.RemoveThis(Id);
         }
 
         public void AddControl(IControl control)
@@ -75,10 +75,10 @@ namespace ArchivalTibiaV71MapEditor.Controls
         {
             base.OffsetChild(ref rect);
             // controls shouldn't have to worry about the caption size
-            rect.Offset(BorderSize, Ui.CaptionHeight + BorderSize); 
+            rect.Offset(BorderSize, Ui.CaptionHeight + BorderSize);
         }
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;
@@ -98,7 +98,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
             for (int i = 0; i < _controls.Count; i++)
             {
-                _controls[i].Draw(sb, drawComponents);
+                _controls[i].Draw(sb, gameTime, drawComponents);
             }
 
             // draw borders
@@ -109,7 +109,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
             // draw caption
             drawComponents.FontRenderer.DrawCachedString(sb, _caption, _captionPos);
-            _closeButton.Draw(sb, drawComponents);
+            _closeButton.Draw(sb, gameTime, drawComponents);
 
             // draw corners
             sb.Draw(_spriteSheet, _topLeft, Ui.Border.WindowTopLeft, Color.White);
@@ -172,7 +172,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
                 _lastHitTest = null;
             }
-            
+
             if (_draggable.HitTest().IsHit)
             {
                 var delta = _draggable.GetMoveDelta();
@@ -188,7 +188,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             }
 
             _ = _closeButton.HitTest();
-            
+
 
             for (var i = _controls.Count - 1; i > -1; i--)
             {

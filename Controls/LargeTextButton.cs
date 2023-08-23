@@ -41,7 +41,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             IsDirty = true;
         }
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;

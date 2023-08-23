@@ -24,7 +24,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 return Bounds.Contains(UiState.Mouse.Position);
             }
 
-            public void Draw(SpriteBatch sb, DrawComponents drawComponents, bool selected)
+            public void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents, bool selected)
             {
                 if (selected)
                     sb.Draw(Pixel.White, Bounds, Color.LightGray);
@@ -32,14 +32,14 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 {
                     sb.Draw(Pixel.White, Bounds, Color.LightBlue);
                 }
-                var color = 
-                    selected 
-                    ? Color.Red 
-                    : MouseManager.IsHovering(Bounds) 
-                        ? Color.LightBlue 
+                var color =
+                    selected
+                    ? Color.Red
+                    : MouseManager.IsHovering(Bounds)
+                        ? Color.LightBlue
                         : Color.White;
                 ImageBox.Color = color;
-                ImageBox.Draw(sb, drawComponents);
+                ImageBox.Draw(sb, gameTime, drawComponents);
             }
         }
 
@@ -108,7 +108,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             IsDirty = true;
         }
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;
@@ -125,11 +125,11 @@ namespace ArchivalTibiaV71MapEditor.Controls
             // draw items
             for (int i = VerticalScrollIndex * HorizontalMaxVisibleItems; i < _items.Count && i - (VerticalScrollIndex * HorizontalMaxVisibleItems) < MaxVisibleItemsTotal; i++)
             {
-                _items[i].Draw(sb, drawComponents, _selectedItem?.Value.Equals(_items[i].Value) ?? false);
+                _items[i].Draw(sb, gameTime, drawComponents, _selectedItem?.Value.Equals(_items[i].Value) ?? false);
             }
-            
+
             if (VerticalItemCount > VerticalMaxVisibleItems)
-                 _scrollBar.Draw(sb, drawComponents);
+                 _scrollBar.Draw(sb, gameTime, drawComponents);
         }
 
         public override HitBox HitTest()
@@ -155,7 +155,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             _clickable.HitTest(MouseButton.Left);
             if (_clickable.IsDown(MouseButton.Left))
                 return HitBox.Hit(this);
-            
+
             return HitBox.Miss;
         }
 
@@ -203,7 +203,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 _items[i].ImageBox.Recalculate();
                 _items[i].Bounds = _items[i].ImageBox.Bounds;
             }
-            
+
             _scrollBar.Recalculate();
             _clickable.SetRect(CleanRect);
             IsDirty = false;

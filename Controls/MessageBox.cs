@@ -55,7 +55,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
         private void Close()
         {
-            Modals.RemoveLast();
+            Modals.RemoveThis(Id);
         }
 
         public static void Setup()
@@ -77,7 +77,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
                         Ui.CaptionHeight + ButtonHeight + Margin * 2)), caption, text));
         }
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;
@@ -101,7 +101,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
             drawComponents.FontRenderer.DrawCachedString(sb, _caption, _captionPos);
             drawComponents.FontRenderer.DrawCachedString(sb, _text, _textPos);
-            _button.Draw(sb, drawComponents);
+            _button.Draw(sb, gameTime, drawComponents);
 
             sb.Draw(_spriteSheet, _topLeft, Ui.Border.WindowTopLeft, Color.White);
             sb.Draw(_spriteSheet, _topRight, Ui.Border.WindowTopRight, Color.White);

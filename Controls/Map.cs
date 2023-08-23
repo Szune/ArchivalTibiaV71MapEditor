@@ -36,6 +36,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
         private ushort _yOffset;
         private readonly Dictionary<Position, Tile> _tiles = new Dictionary<Position, Tile>();
         private readonly Clickable _clickable = new Clickable();
+        private readonly Draggable _moveToolDraggable = new Draggable(MouseButton.Left, 5);
         private readonly Draggable _draggable = new Draggable(MouseButton.Middle, 5);
         private MapTool _tool = MapTool.Place;
         private bool _lastOnTop;
@@ -54,7 +55,8 @@ namespace ArchivalTibiaV71MapEditor.Controls
         private bool _performingMapAction = false;
         private readonly VerticalScrollBar _verticalScrollBar;
         private readonly HorizontalScrollBar _horizontalScrollBar;
-        private readonly MouseScrollable _mouseScrollable;
+        private readonly MouseScrollable _mouseScrollableFloorChange;
+        private readonly MouseScrollable _mouseScrollableZoom;
 
         private Point _renderSize = new Point(32, 32);
         private readonly Point _renderSizeMin = new Point(4, 4);
@@ -116,13 +118,28 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 _contextMenu.Show(UiState.Mouse.Position);
             };
             _clickable.OnMouseLeave = () => _state = ActionState.None;
-            _verticalScrollBar = new VerticalScrollBar(window, this, Border.Right);
+            _verticalScrollBar = new VerticalScrollBar(window, this, Border.Right, scrollable: false);
             _verticalScrollBar.Offset(Scroll.Width);
-            _horizontalScrollBar = new HorizontalScrollBar(window, this, Border.Bottom);
+            _horizontalScrollBar = new HorizontalScrollBar(window, this, Border.Bottom, scrollable: false);
             _horizontalScrollBar.Offset(Scroll.Height);
-            _mouseScrollable = new MouseScrollable(this, ModifierKeys.Ctrl);
-            _mouseScrollable.OnScrollBackward = ZoomOut;
-            _mouseScrollable.OnScrollForward = ZoomIn;
+            _mouseScrollableFloorChange = new MouseScrollable(this, ModifierKeys.None);
+            _mouseScrollableFloorChange.OnScrollBackward = FloorUp;
+            _mouseScrollableFloorChange.OnScrollForward = FloorDown;
+            _mouseScrollableZoom = new MouseScrollable(this, ModifierKeys.Ctrl);
+            _mouseScrollableZoom.OnScrollBackward = ZoomOut;
+            _mouseScrollableZoom.OnScrollForward = ZoomIn;
+        }
+
+        private void FloorDown(int steps)
+        {
+            _currentZ = (byte) Math.Min(_currentZ +  1, 15);
+            IsDirty = true;
+        }
+
+        private void FloorUp(int steps)
+        {
+            _currentZ = (byte) Math.Max(_currentZ -  1, 0);
+            IsDirty = true;
         }
 
         private void BuildContextMenus()
@@ -205,6 +222,9 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
             switch (_tool)
             {
+                case MapTool.Move:
+                    // no action
+                    return;
                 case MapTool.Place:
                     if (spam)
                         AddTile();
@@ -276,8 +296,11 @@ namespace ArchivalTibiaV71MapEditor.Controls
             {
                 if (!ValidatePosition(position))
                     return;
-                if (Ui.SelectedTile.Item.Type == DatCategories.Tiles && AddSingleTile(position))
+                if (Ui.SelectedTile.Item.Type == DatCategories.Tiles)
+                {
+                    AddSingleTile(position);
                     return;
+                }
                 AddSingleTileOnTop(position);
             }
 
@@ -303,7 +326,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
         }
 
 
-        public override void Draw(SpriteBatch sb, DrawComponents drawComponents)
+        public override void Draw(SpriteBatch sb, GameTime gameTime, DrawComponents drawComponents)
         {
             if (!Visible)
                 return;
@@ -311,23 +334,30 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 Recalculate();
             sb.Draw(_cachedMap, CleanRect, Color.White);
 
-            _verticalScrollBar.Draw(sb, drawComponents);
-            _horizontalScrollBar.Draw(sb, drawComponents);
+            _verticalScrollBar.Draw(sb, gameTime, drawComponents);
+            _horizontalScrollBar.Draw(sb, gameTime, drawComponents);
             if (_state == ActionState.None) return;
             // draw location should lock on to the closest 32x32 tiles
             var hoverLocation = GetHoverLocation();
             if (!CleanRect.Contains(hoverLocation))
                 return;
+
             if ((_tool == MapTool.Place || _tool == MapTool.QuickPlace) && Ui.SelectedTile != null)
             {
                 DrawHoverSprite(sb, drawComponents, hoverLocation);
             }
 
-            DrawHoverGrid(sb, hoverLocation.ToPoint());
+            if (_tool != MapTool.Move)
+            {
+                DrawHoverGrid(sb, hoverLocation.ToPoint());
+            }
+
             if (DrawGameGrid)
                 DrawGameScreenGrid(sb, hoverLocation.ToPoint());
+            var topLeftPos = ScreenToWorld(Vector2.Zero);
+            Ui.TopLeftPositionTextLabel.Text = $"({topLeftPos.X}, {topLeftPos.Y}, {topLeftPos.Z})";
             var worldPos = ScreenToWorld(GetMouseMapLocation());
-            Ui.StatusTextLabel.Text = $"({worldPos.X}, {worldPos.Y}, {worldPos.Z})";
+            Ui.MousePositionTextLabel.Text = $"({worldPos.X}, {worldPos.Y}, {worldPos.Z})";
         }
 
         private void DrawHoverSprite(SpriteBatch sb, DrawComponents drawComponents, Vector2 location)
@@ -462,7 +492,11 @@ namespace ArchivalTibiaV71MapEditor.Controls
             {
                 return hit;
             }
-            else if ((hit = _mouseScrollable.HitTest()).IsHit)
+            else if ((hit = _mouseScrollableZoom.HitTest()).IsHit)
+            {
+                return hit;
+            }
+            else if ((hit = _mouseScrollableFloorChange.HitTest()).IsHit)
             {
                 return hit;
             }
@@ -475,7 +509,16 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 _draggable.InvalidateDelta();
                 return HitBox.Hit(this);
             }
-            else if (_clickable.HitTest(MouseButton.Left))
+            else if (_tool == MapTool.Move && _moveToolDraggable.HitTest().IsHit)
+            {
+                var delta = _moveToolDraggable.GetMoveDelta();
+                _xOffset = (ushort) ((int) (_xOffset + delta.X)).Clamp(MinX, MaxX);
+                _yOffset = (ushort) ((int) (_yOffset + delta.Y)).Clamp(MinY, MaxY);
+                IsDirty = true;
+                _moveToolDraggable.InvalidateDelta();
+                return HitBox.Hit(this);
+            }
+            else if (_tool != MapTool.Move && _clickable.HitTest(MouseButton.Left))
             {
                 _performingMapAction = true;
                 return HitBox.Hit(this);
@@ -492,6 +535,11 @@ namespace ArchivalTibiaV71MapEditor.Controls
         {
             void AddSingleTileOnTop(Position position)
             {
+                if (Ui.SelectedTile.Item.Type == DatCategories.Tiles)
+                {
+                    return;
+                }
+
                 if (!ValidatePosition(position))
                     return;
                 if (!_tiles.TryGetValue(position, out var tile))
@@ -558,8 +606,13 @@ namespace ArchivalTibiaV71MapEditor.Controls
 
             if (Ui.SelectedTile == null)
                 return;
-            if (Ui.SelectedTile.Item.Type != DatCategories.Tiles)
+            if (Ui.SelectedTile.Item.Type != DatCategories.Tiles &&
+                // allow putting a, for example, roof tile without a tile below it
+                // if it is above ground level and is visible on the minimap
+                (_currentZ > 7 || Ui.SelectedTile.Item.MinimapColor <= 0))
+            {
                 return;
+            }
             var pos = ScreenToWorld(GetMouseMapLocation());
             if (_pencilOne.Equals(_pencil))
             {
@@ -708,6 +761,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
             var mapRect = new Rectangle(x, y, width, height);
             SetRect(mapRect);
             _clickable.SetRect(mapRect);
+            _moveToolDraggable.SetRect(mapRect);
             _draggable.SetRect(mapRect);
             _verticalScrollBar.Recalculate();
             _horizontalScrollBar.Recalculate();
@@ -762,6 +816,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
                 _tiles[t.tile.Position] = t.tile;
             }
 
+            fs.Flush();
             IsDirty = true;
         }
 
@@ -909,27 +964,42 @@ namespace ArchivalTibiaV71MapEditor.Controls
             sb.UsualBegin();
             sb.Draw(Pixel.Black, new Rectangle(0, 0, CleanRect.Width, CleanRect.Height), Color.White);
 
-            byte startZ, endZ;
-            if (_currentZ >= 7)
+            int startZ, endZ, stepZ;
+
+            if (_currentZ > 7)
             {
-                startZ = 7;
-                endZ = (byte) (_currentZ + 1);
+                // below ground
+                startZ = MaxZ;
+                endZ = _currentZ - 1;
+                stepZ = -1;
             }
+            // else if (_currentZ == 7)
+            // {
+            //     startZ = _currentZ;
+            //     endZ = _currentZ + 1;
+            //     stepZ = 1;
+            // }
             else
             {
-                startZ = 0;
-                endZ = 7;
+                // above ground
+                startZ = 7;
+                endZ = _currentZ - 1;
+                stepZ = -1;
             }
 
-            for (short z = startZ; z != endZ; z++)
+
+            for (var z = startZ; z != endZ; z += stepZ)
             {
+                var offset = _currentZ - z;
                 // draw tiles on current floor
-                for (ushort y = _yOffset; y < _yOffset + _yTiles; y++)
+                for (var y = _yOffset; y < _yOffset + _yTiles; y++)
                 {
-                    for (ushort x = _xOffset; x < _xOffset + _xTiles; x++)
+                    for (var x = _xOffset; x < _xOffset + _xTiles; x++)
                     {
                         if (!_tiles.TryGetValue(new Position(x, y, (byte) z), out var tile)) continue;
-                        var location = WorldToRenderTarget(tile.Position);
+                        //if (!_tiles.TryGetValue(new Position((ushort)(x + offset), (ushort)(y + offset), (byte) z), out var tile)) continue;
+                        //var location = WorldToRenderTarget(tile.Position);
+                        var location = WorldToRenderTarget(tile.Position.Subtract((ushort)offset));
                         //if (!CleanRect.Contains(location + (Vector2.One * (_renderSize.X - 1)))) continue;
                         var tileParts = tile.Ground.GetParts(location, _renderSize);
                         drawComponents.SpriteRenderer.Draw(
@@ -948,7 +1018,7 @@ namespace ArchivalTibiaV71MapEditor.Controls
                     for (ushort x = _xOffset; x < _xOffset + _xTiles; x++)
                     {
                         if (!_tiles.TryGetValue(new Position(x, y, (byte) z), out var tile)) continue;
-                        var location = WorldToRenderTarget(tile.Position);
+                        var location = WorldToRenderTarget(tile.Position.Subtract((ushort)offset));
                         //if (!CleanRect.Contains(location + (Vector2.One * (_renderSize.X - 1)))) continue;
                         for (int a = 0; a < tile.OnTop.Count; a++)
                         {
@@ -985,26 +1055,38 @@ namespace ArchivalTibiaV71MapEditor.Controls
             sb.UsualBegin();
             sb.Draw(Pixel.Black, new Rectangle(0, 0, CleanRect.Width, CleanRect.Height), Color.White);
 
-            byte startZ, endZ;
-            if (_currentZ >= 7)
+            int startZ, endZ, stepZ;
+
+            if (_currentZ > 7)
             {
-                startZ = 7;
-                endZ = (byte) (_currentZ + 1);
+                // below ground
+                startZ = MaxZ;
+                endZ = _currentZ - 1;
+                stepZ = -1;
+            }
+            else if (_currentZ == 7)
+            {
+                startZ = _currentZ;
+                endZ = _currentZ + 1;
+                stepZ = 1;
             }
             else
             {
-                startZ = 0;
-                endZ = 7;
+                // above ground
+                startZ = 7;
+                endZ = _currentZ - 1;
+                stepZ = -1;
             }
 
-            for (short z = startZ; z != endZ; z++)
+            for (int z = startZ; z != endZ; z += stepZ)
             {
+                var offset = _currentZ - z;
                 for (ushort y = _yOffset; y < _yOffset + _yTiles; y++)
                 {
                     for (ushort x = _xOffset; x < _xOffset + _xTiles; x++)
                     {
                         if (!_tiles.TryGetValue(new Position(x, y, (byte) z), out var tile)) continue;
-                        var location = WorldToRenderTarget(tile.Position);
+                        var location = WorldToRenderTarget(tile.Position.Subtract((ushort)offset));
                         //if (!CleanRect.Contains(location + (Vector2.One * (_renderSize.X - 1)))) continue;
                         var tileParts = tile.Ground.GetParts(location, _renderSize);
                         drawComponents.SpriteRenderer.Draw(
@@ -1041,6 +1123,12 @@ namespace ArchivalTibiaV71MapEditor.Controls
         {
             _placeTool = place;
             _placeButton = placeButton;
+        }
+
+        public void SetFloor(byte z)
+        {
+            _currentZ = z;
+            IsDirty = true;
         }
     }
 }
